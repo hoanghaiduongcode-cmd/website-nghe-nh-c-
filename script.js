@@ -1,218 +1,187 @@
-const musicContainer = document.getElementById('music-container');
+const audio = document.getElementById('audio');
 const playBtn = document.getElementById('play');
 const prevBtn = document.getElementById('prev');
 const nextBtn = document.getElementById('next');
-const audio = document.getElementById('audio');
+const shuffleBtn = document.getElementById('shuffle');
+const repeatBtn = document.getElementById('repeat');
 const progress = document.getElementById('progress');
 const progressContainer = document.getElementById('progress-container');
-const title = document.getElementById('title');
+const volumeSlider = document.getElementById('volume-slider');
+const volumeIcon = document.getElementById('volume-icon');
+
+const titleDOM = document.getElementById('title');
+const artistDOM = document.getElementById('artist');
+const currentTimeDOM = document.getElementById('current-time');
+const durationTimeDOM = document.getElementById('duration-time');
+const playlistDOM = document.getElementById('playlist');
 const fileUpload = document.getElementById('file-upload');
-const playlist = document.getElementById('playlist');
+const discSection = document.querySelector('.disc-section');
 
-let songs = []; // Mảng chứa dữ liệu các bài hát được tải lên
+let songs = [];
 let songIndex = 0;
+let isPlaying = false;
+let isShuffle = false;
+let isRepeat = false;
 
-// Xử lý khi người dùng chọn file MP3
+// Format thời gian từ giây sang phút:giây
+function formatTime(seconds) {
+    if (isNaN(seconds)) return "0:00";
+    const min = Math.floor(seconds / 60);
+    const sec = Math.floor(seconds % 60);
+    return `${min}:${sec < 10 ? '0' + sec : sec}`;
+}
+
+// Xử lý File tải lên
 fileUpload.addEventListener('change', function(e) {
     const files = e.target.files;
-    
     if (files.length === 0) return;
 
     const isFirstUpload = songs.length === 0;
 
-    // Quét qua các file vừa chọn và thêm vào mảng songs
     for (let i = 0; i < files.length; i++) {
         const file = files[i];
-        
-        // Tạo đường dẫn tạm thời (Blob URL) để trình duyệt có thể phát file từ máy tính
         const fileURL = URL.createObjectURL(file);
         
         songs.push({
-            name: file.name.replace(/\.[^/.]+$/, ""), // Cắt đuôi .mp3 đi cho đẹp
+            name: file.name.replace(/\.[^/.]+$/, ""),
+            artist: "Unknown Artist", // Do file MP3 local khó trích xuất metadata nhanh nên để mặc định
             url: fileURL
         });
     }
 
     renderPlaylist();
-
-    // Nếu là lần tải lên đầu tiên, tự động chọn bài số 1
-    if (isFirstUpload) {
-        loadSong(0);
-    }
+    if (isFirstUpload) loadSong(0);
 });
 
-// Hiển thị danh sách phát ra màn hình
+// Hiển thị danh sách phát
 function renderPlaylist() {
-    playlist.innerHTML = ''; // Xóa thông báo trống
-    
+    playlistDOM.innerHTML = '';
     songs.forEach((song, index) => {
         const li = document.createElement('li');
-        li.innerText = song.name;
+        li.innerHTML = `<span class="song-num">${index + 1}</span> ${song.name}`;
         
-        // Đánh dấu bài hát đang phát
-        if (index === songIndex) {
-            li.classList.add('playing');
-        }
+        if (index === songIndex) li.classList.add('active');
 
-        // Bấm vào tên bài trong danh sách để phát luôn
         li.addEventListener('click', () => {
             songIndex = index;
             loadSong(songIndex);
             playSong();
         });
-
-        playlist.appendChild(li);
+        playlistDOM.appendChild(li);
     });
 }
 
-// Cập nhật thông tin bài hát vào Trình phát
+// Tải bài hát
 function loadSong(index) {
     if (songs.length === 0) return;
     
-    title.innerText = songs[index].name;
-    audio.src = songs[index].url;
+    const song = songs[index];
+    titleDOM.innerText = song.name;
+    artistDOM.innerText = song.artist;
+    audio.src = song.url;
     
-    // Cập nhật lại giao diện danh sách (để tô màu xanh bài đang phát)
+    // Reset thời gian
+    currentTimeDOM.innerText = "0:00";
+    
     renderPlaylist();
 }
 
-// Phát nhạc
+// Play / Pause
 function playSong() {
-    if (songs.length === 0) return; // Không có nhạc thì không làm gì
-    musicContainer.classList.add('play');
-    playBtn.querySelector('i.fas').classList.remove('fa-play');
-    playBtn.querySelector('i.fas').classList.add('fa-pause');
+    if (songs.length === 0) return;
+    isPlaying = true;
+    discSection.classList.add('playing');
+    playBtn.innerHTML = '<i class="fas fa-pause"></i>';
     audio.play();
 }
 
-// Tạm dừng nhạc
 function pauseSong() {
-    musicContainer.classList.remove('play');
-    playBtn.querySelector('i.fas').classList.add('fa-play');
-    playBtn.querySelector('i.fas').classList.remove('fa-pause');
+    isPlaying = false;
+    discSection.classList.remove('playing');
+    playBtn.innerHTML = '<i class="fas fa-play"></i>';
     audio.pause();
 }
 
-// Bài trước đó
+playBtn.addEventListener('click', () => {
+    isPlaying ? pauseSong() : playSong();
+});
+
+// Next / Prev
+function nextSong() {
+    if (songs.length === 0) return;
+
+    if (isShuffle) {
+        songIndex = Math.floor(Math.random() * songs.length);
+    } else {
+        songIndex++;
+        if (songIndex > songs.length - 1) songIndex = 0;
+    }
+    
+    loadSong(songIndex);
+    playSong();
+}
+
 function prevSong() {
     if (songs.length === 0) return;
     songIndex--;
-    if (songIndex < 0) {
-        songIndex = songs.length - 1;
-    }
+    if (songIndex < 0) songIndex = songs.length - 1;
     loadSong(songIndex);
     playSong();
 }
 
-// Bài tiếp theo
-function nextSong() {
-    if (songs.length === 0) return;
-    songIndex++;
-    if (songIndex > songs.length - 1) {
-        songIndex = 0;
-    }
-    loadSong(songIndex);
-    playSong();
-}
+nextBtn.addEventListener('click', nextSong);
+prevBtn.addEventListener('click', prevSong);
 
-// Thanh tiến trình
-function updateProgress(e) {
-    const { duration, currentTime } = e.srcElement;
-    if (duration) {
-        const progressPercent = (currentTime / duration) * 100;
-        progress.style.width = `${progressPercent}%`;
-    }
-}
+// Shuffle & Repeat
+shuffleBtn.addEventListener('click', () => {
+    isShuffle = !isShuffle;
+    shuffleBtn.classList.toggle('active');
+});
 
-// Tua nhạc
-function setProgress(e) {
-    const width = this.clientWidth;
-    const clickX = e.offsetX;
-    const duration = audio.duration;
-    if (duration) {
-        audio.currentTime = (clickX / width) * duration;
-    }
-}
+repeatBtn.addEventListener('click', () => {
+    isRepeat = !isRepeat;
+    repeatBtn.classList.toggle('active');
+});
 
-// Các sự kiện click
-playBtn.addEventListener('click', () => {
-    const isPlaying = musicContainer.classList.contains('play');
-    if (isPlaying) {
-        pauseSong();
-    } else {
+// Tự động xử lý khi hết bài
+audio.addEventListener('ended', () => {
+    if (isRepeat) {
+        audio.currentTime = 0;
         playSong();
+    } else {
+        nextSong();
     }
 });
 
-prevBtn.addEventListener('click', prevSong);
-nextBtn.addEventListener('click', nextSong);
-audio.addEventListener('timeupdate', updateProgress);
-progressContainer.addEventListener('click', setProgress);
-
-// Tự động chuyển bài khi hết nhạc
-audio.addEventListener('ended', nextSong);
-function playSong() {
-    musicContainer.classList.add('play');
-    playBtn.querySelector('i.fas').classList.remove('fa-play');
-    playBtn.querySelector('i.fas').classList.add('fa-pause');
-    audio.play();
-}
-
-// Tạm dừng nhạc
-function pauseSong() {
-    musicContainer.classList.remove('play');
-    playBtn.querySelector('i.fas').classList.add('fa-play');
-    playBtn.querySelector('i.fas').classList.remove('fa-pause');
-    audio.pause();
-}
-
-// Chuyển bài trước đó
-function prevSong() {
-    songIndex--;
-    if (songIndex < 0) {
-        songIndex = songs.length - 1;
-    }
-    loadSong(songs[songIndex]);
-    playSong();
-}
-
-// Chuyển bài tiếp theo
-function nextSong() {
-    songIndex++;
-    if (songIndex > songs.length - 1) {
-        songIndex = 0;
-    }
-    loadSong(songs[songIndex]);
-    playSong();
-}
-
 // Cập nhật thanh tiến trình
-function updateProgress(e) {
+audio.addEventListener('timeupdate', (e) => {
     const { duration, currentTime } = e.srcElement;
-    const progressPercent = (currentTime / duration) * 100;
-    progress.style.width = `${progressPercent}%`;
-}
+    if (duration) {
+        const percent = (currentTime / duration) * 100;
+        progress.style.width = `${percent}%`;
+        currentTimeDOM.innerText = formatTime(currentTime);
+        durationTimeDOM.innerText = formatTime(duration);
+    }
+});
 
-// Tua nhạc khi click vào thanh tiến trình
-function setProgress(e) {
+// Tua nhạc
+progressContainer.addEventListener('click', function(e) {
+    if (songs.length === 0) return;
     const width = this.clientWidth;
     const clickX = e.offsetX;
     const duration = audio.duration;
     audio.currentTime = (clickX / width) * duration;
-}
-
-// Lắng nghe các sự kiện (Event Listeners)
-playBtn.addEventListener('click', () => {
-    const isPlaying = musicContainer.classList.contains('play');
-    if (isPlaying) {
-        pauseSong();
-    } else {
-        playSong();
-    }
 });
 
-prevBtn.addEventListener('click', prevSong);
-nextBtn.addEventListener('click', nextSong);
-audio.addEventListener('timeupdate', updateProgress);
-progressContainer.addEventListener('click', setProgress);
-audio.addEventListener('ended', nextSong);
+// Điều chỉnh âm lượng
+volumeSlider.addEventListener('input', (e) => {
+    audio.volume = e.target.value;
+    // Đổi icon loa tùy theo âm lượng
+    if (audio.volume === 0) {
+        volumeIcon.className = 'fas fa-volume-mute';
+    } else if (audio.volume < 0.5) {
+        volumeIcon.className = 'fas fa-volume-down';
+    } else {
+        volumeIcon.className = 'fas fa-volume-up';
+    }
+});
