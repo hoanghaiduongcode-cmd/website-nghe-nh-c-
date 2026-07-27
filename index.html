@@ -3,49 +3,76 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Trình Phát Nhạc Cá Nhân</title>
+    <title>Trình Phát Nhạc Cao Cấp</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="player-wrapper">
-        <div class="music-container" id="music-container">
-            <div class="music-info">
-                <h4 id="title">Chưa có bài hát nào</h4>
-                <div class="progress-container" id="progress-container">
-                    <div class="progress" id="progress"></div>
-                </div>
-            </div>
+    <!-- Khu vực thêm nhạc (Góc trên) -->
+    <header class="top-bar">
+        <h2><i class="fas fa-headphones"></i> Music Player</h2>
+        <input type="file" id="file-upload" accept="audio/mp3, audio/*" multiple hidden>
+        <label for="file-upload" class="upload-btn">
+            <i class="fas fa-cloud-upload-alt"></i> Thêm Nhạc
+        </label>
+    </header>
 
-            <audio src="" id="audio"></audio>
-
-            <div class="img-container">
-                <img src="https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=500&q=80" alt="music-cover" id="cover">
+    <div class="main-container">
+        <!-- Khối Đĩa Nhạc & Thông tin -->
+        <div class="disc-section">
+            <div class="img-container" id="img-container">
+                <img src="https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?q=80&w=500" alt="cover" id="cover">
             </div>
-
-            <div class="navigation">
-                <button id="prev" class="action-btn">
-                    <i class="fas fa-backward"></i>
-                </button>
-                <button id="play" class="action-btn action-btn-big">
-                    <i class="fas fa-play"></i>
-                </button>
-                <button id="next" class="action-btn">
-                    <i class="fas fa-forward"></i>
-                </button>
-            </div>
+            <h2 id="title">Chưa có bài hát</h2>
+            <p id="artist">Vui lòng thêm nhạc để phát</p>
         </div>
 
-        <!-- Khu vực quản lý File và Danh sách phát -->
-        <div class="playlist-container">
-            <input type="file" id="file-upload" accept="audio/mp3, audio/*" multiple hidden>
-            <label for="file-upload" class="upload-btn">
-                <i class="fas fa-plus-circle"></i> Thêm nhạc (MP3)
-            </label>
+        <!-- Khối Danh sách phát -->
+        <div class="playlist-section">
+            <h3><i class="fas fa-list-ul"></i> Danh Sách Phát</h3>
             <ul id="playlist" class="playlist">
-                <li class="empty-msg">Vui lòng chọn file nhạc để bắt đầu...</li>
+                <div class="empty-state">
+                    <i class="fas fa-music"></i>
+                    <p>Danh sách trống</p>
+                </div>
             </ul>
         </div>
+    </div>
+
+    <!-- Thanh Điều Khiển Dưới Cùng -->
+    <div class="bottom-player" id="music-container">
+        <!-- Thanh tiến trình & Thời gian -->
+        <div class="progress-area">
+            <span class="time current" id="current-time">0:00</span>
+            <div class="progress-bar-wrapper" id="progress-container">
+                <div class="progress-bar" id="progress"></div>
+            </div>
+            <span class="time duration" id="duration-time">0:00</span>
+        </div>
+
+        <div class="controls-wrapper">
+            <!-- Nút phụ trái -->
+            <div class="extra-controls left">
+                <button id="shuffle" class="control-btn" title="Phát ngẫu nhiên"><i class="fas fa-random"></i></button>
+            </div>
+
+            <!-- Nút chính giữa -->
+            <div class="main-controls">
+                <button id="prev" class="control-btn"><i class="fas fa-step-backward"></i></button>
+                <button id="play" class="control-btn play-btn"><i class="fas fa-play"></i></button>
+                <button id="next" class="control-btn"><i class="fas fa-step-forward"></i></button>
+            </div>
+
+            <!-- Nút phụ phải (Lặp lại & Âm lượng) -->
+            <div class="extra-controls right">
+                <button id="repeat" class="control-btn" title="Lặp lại"><i class="fas fa-redo-alt"></i></button>
+                <div class="volume-container">
+                    <i class="fas fa-volume-up" id="volume-icon"></i>
+                    <input type="range" id="volume-slider" min="0" max="1" step="0.01" value="1">
+                </div>
+            </div>
+        </div>
+        <audio id="audio" src=""></audio>
     </div>
 
     <script src="script.js"></script>
